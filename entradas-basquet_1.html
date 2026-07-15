@@ -673,17 +673,15 @@
     const url = CAJA_URL + '?nombre=' + encodeURIComponent(nombre||'Sin nombre') +
                 '&fecha=' + encodeURIComponent(fecha||'') +
                 '&datos=' + encodeURIComponent(JSON.stringify(datos));
-    toast('📤 Guardando en Caja...');
-    fetch(url)
-      .then(r=>r.json())
-      .then(d=>{
-        if(d.ok){
-          toast('✅ Guardado en Caja — pestaña: '+d.tab);
-        } else {
-          toast('❌ Error: '+d.error);
-        }
-      })
-      .catch(e=>toast('❌ Error al guardar'));
+    // Crear link y simular click — Safari lo permite cuando es directo
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('✅ Cerrá la pestaña que se abrió — quedó guardado');
   }
 
   function abrirSheet(){
