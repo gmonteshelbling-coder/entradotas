@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Entradas Básquet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+  :root{--negro:#0d0d0d;--rojo:#c0392b;--rc:#e74c3c;--verde:#27ae60;--g:#1c1c1e;--g2:#2c2c2e;--g3:#3a3a3c;--tx:#f0f0f0;--su:#a0a0a0;--am:#f0c040;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--negro);color:var(--tx);font-family:'Inter',sans-serif;padding-bottom:60px;}
+  header{background:var(--g);border-bottom:3px solid var(--rojo);padding:16px 20px 12px;text-align:center;}
+  header h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;}
+  header p{font-size:.75rem;color:var(--su);margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+  .cfg{background:var(--g2);padding:14px 16px;border-bottom:1px solid var(--g3);}
+  .clbl{font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin-bottom:10px;}
+  .row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+  .row input{flex:1;background:var(--g3);border:1px solid #444;border-radius:8px;padding:9px 12px;color:var(--tx);font-size:.9rem;font-family:'Inter',sans-serif;min-width:70px;}
+  .row input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);}
+  .row label{font-size:.8rem;color:var(--su);white-space:nowrap;}
+  .bset{background:var(--rojo);color:white;border:none;border-radius:8px;padding:9px 14px;font-size:.85rem;font-weight:600;cursor:pointer;}
+  .trow{display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;}
+  .tlbl{font-size:.82rem;color:var(--su);}
+  .tlbl strong{color:var(--tx);}
+  .tgl{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .tgl input{opacity:0;width:0;height:0;}
+  .tgls{position:absolute;inset:0;background:var(--g3);border-radius:26px;cursor:pointer;transition:.2s;}
+  .tgls:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s;}
+  .tgl input:checked+.tgls{background:var(--am);}
+  .tgl input:checked+.tgls:before{transform:translateX(20px);}
+  .barra{background:rgba(240,192,64,.1);border-bottom:1px solid rgba(240,192,64,.2);padding:7px 16px;font-size:.75rem;color:var(--su);text-align:center;}
+  .barra span{color:var(--am);font-weight:700;}
+  .tabs{display:flex;margin:12px 16px;background:var(--g2);border-radius:10px;padding:4px;gap:3px;}
+  .tab{flex:1;text-align:center;padding:8px 2px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer;color:var(--su);border:none;background:none;transition:all .2s;}
+  .tab.on{background:var(--rojo);color:white;}
+  .panel{display:none;padding:0 16px;}
+  .panel.on{display:block;}
+  .fc{background:var(--g2);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--g3);}
+  .fc h3{font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin-bottom:14px;}
+  .campo{margin-bottom:12px;}
+  .campo label{display:block;font-size:.72rem;font-weight:600;color:var(--su);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+  .campo input{width:100%;background:var(--g3);border:1px solid #444;border-radius:8px;padding:10px 12px;color:var(--tx);font-size:.95rem;font-family:'Inter',sans-serif;}
+  .campo input:focus{outline:none;border-color:var(--rojo);}
+  .tipo{display:flex;gap:8px;}
+  .tbtn{flex:1;padding:10px 6px;border-radius:8px;border:2px solid var(--g3);background:var(--g3);color:var(--su);font-size:.85rem;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;}
+  .tbtn.vi{border-color:var(--verde);color:var(--verde);background:rgba(39,174,96,.1);}
+  .tbtn.ve{border-color:var(--rc);color:var(--rc);background:rgba(192,57,43,.1);}
+  .btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:1rem;font-weight:700;cursor:pointer;margin-top:6px;}
+  .btn.ing{background:var(--verde);color:white;}
+  .btn.eg{background:var(--rc);color:white;}
+  .btn.nuevo{background:#111;color:var(--su);margin-bottom:12px;}
+  .btn.cerrar{border:2px solid var(--am);background:rgba(240,192,64,.08);color:var(--am);margin-top:10px;}
+  .btn.copiar{border:2px solid var(--su);background:none;color:var(--tx);margin-top:8px;}
+  .mi{background:var(--g2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid transparent;}
+  .mi.i{border-left-color:var(--verde);}
+  .mi.e{border-left-color:var(--rc);}
+  .mtp{font-size:.82rem;font-weight:600;}
+  .mdt{font-size:.72rem;color:var(--su);margin-top:2px;}
+  .mmo{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;}
+  .mi.i .mmo{color:var(--verde);}
+  .mi.e .mmo{color:var(--rc);}
+  .mdl{background:none;border:none;color:#444;font-size:1rem;cursor:pointer;margin-left:10px;}
+  /* TARJETAS PARTIDO */
+  .ptarjeta{background:var(--g2);border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--g3);}
+  .ptarjeta.sel{border-color:var(--rojo);background:#1a0a0a;}
+  .pt-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .pt-left .pt-fecha{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;color:var(--am);}
+  .pt-left .pt-nombre{font-size:.88rem;font-weight:600;margin-top:2px;}
+  .pt-right .pt-saldo{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--verde);}
+  .pt-right .pt-slab{font-size:.65rem;color:var(--su);text-align:right;}
+  .pt-body{display:none;margin-top:14px;border-top:1px solid var(--g3);padding-top:14px;}
+  .pt-body.on{display:block;}
+  .rg{background:var(--g3);border-radius:10px;padding:14px;margin-bottom:10px;}
+  .rg h4{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin-bottom:10px;}
+  .rf{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.88rem;}
+  .rf:last-child{border-bottom:none;}
+  .rf .l{color:var(--su);}
+  .rf .v{font-weight:700;}
+  .verde{color:var(--verde);}
+  .rojo{color:var(--rc);}
+  .sbox{background:var(--am);border-radius:10px;padding:14px;text-align:center;margin-bottom:10px;}
+  .sbox .sl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(0,0,0,.6);}
+  .sbox .sm{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:#0d0d0d;letter-spacing:2px;}
+  .pt-movs{margin-top:10px;}
+  .pt-movs .ms{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--su);margin-bottom:6px;}
+  .pt-mov{font-size:.8rem;padding:4px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04);}
+  .pt-mov .ml{color:var(--su);}
+  .bdel{background:none;border:1px solid #444;color:var(--su);border-radius:6px;padding:6px 12px;font-size:.75rem;cursor:pointer;margin-top:10px;width:100%;}
+  /* Calendario */
+  .cal-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;margin-bottom:8px;}
+  .cal-mes{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;}
+  .cal-btn{background:var(--g2);border:none;color:var(--tx);border-radius:8px;padding:8px 14px;font-size:1rem;cursor:pointer;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cdl{text-align:center;font-size:.65rem;color:var(--su);font-weight:700;text-transform:uppercase;padding-bottom:6px;}
+  .cd{min-height:46px;border-radius:10px;background:var(--g2);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--g3);}
+  .cd.vacio{background:transparent;border-color:transparent;}
+  .cd.hoy{border-color:var(--rojo);}
+  .cdn{font-size:.78rem;color:var(--su);}
+  .cd.cp .cdn{color:var(--tx);font-weight:700;}
+  .cball{font-size:1rem;line-height:1.2;}
+  .pl{background:var(--g2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid var(--am);cursor:pointer;}
+  .pl-f{font-size:.72rem;color:var(--su);}
+  .pl-n{font-size:.88rem;font-weight:600;margin-top:2px;}
+  .pl-s{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--verde);}
+  .pl-sl{font-size:.65rem;color:var(--su);text-align:right;}
+  .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;align-items:flex-end;}
+  .ov.on{display:flex;}
+  .mbox{background:var(--g2);border-radius:20px 20px 0 0;padding:20px 20px 40px;width:100%;max-height:85vh;overflow-y:auto;}
+  .mtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+  .mtit{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1.5px;color:var(--am);flex:1;padding-right:10px;}
+  .mclose{background:none;border:none;color:var(--su);font-size:1.4rem;cursor:pointer;}
+  .mf{display:flex;justify-content:space-between;padding:6px 0;font-size:.88rem;border-bottom:1px solid var(--g3);}
+  .mf:last-child{border-bottom:none;}
+  .mf .ml{color:var(--su);}
+  .msec{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--su);margin:12px 0 6px;}
+  .mmv{font-size:.82rem;padding:5px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05);}
+  .mmv .mml{color:var(--su);}
+  .msaldo{background:var(--am);border-radius:10px;padding:12px;text-align:center;margin:14px 0 8px;}
+  .msaldo .msl{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(0,0,0,.6);font-weight:700;}
+  .msaldo .msm{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#0d0d0d;}
+  .empty{text-align:center;color:var(--su);font-size:.85rem;padding:30px 0;line-height:1.8;}
+
+  /* MODAL EDICIÓN */
+  .edit-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:300;overflow-y:auto;padding:20px 16px 60px;}
+  .edit-overlay.on{display:block;}
+  .edit-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .edit-tit{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--am);}
+  .edit-close{background:none;border:none;color:var(--su);font-size:1.4rem;cursor:pointer;}
+  .edit-field{margin-bottom:14px;}
+  .edit-field label{display:block;font-size:.72rem;font-weight:600;color:var(--su);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+  .edit-field input{width:100%;background:var(--g3);border:1px solid #444;border-radius:8px;padding:10px 12px;color:var(--tx);font-size:.95rem;font-family:'Inter',sans-serif;}
+  .edit-field input:focus{outline:none;border-color:var(--rojo);}
+  .edit-sec{font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin:18px 0 10px;}
+  .edit-mov{background:var(--g2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--g3);}
+  .edit-mov-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .edit-mov-lbl{font-size:.82rem;font-weight:600;}
+  .edit-mov-del{background:none;border:none;color:var(--su);font-size:.9rem;cursor:pointer;}
+  .edit-mov input{width:100%;background:var(--g3);border:1px solid #444;border-radius:6px;padding:8px 10px;color:var(--tx);font-size:.9rem;font-family:'Inter',sans-serif;margin-top:4px;}
+  .btn-save{width:100%;padding:14px;border-radius:10px;border:none;font-size:1rem;font-weight:700;cursor:pointer;background:var(--verde);color:white;margin-top:16px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏀 Entradas Básquet</h1>
+  <p>Tandil — Ingresos & Egresos</p>
+  <a href="https://docs.google.com/spreadsheets/d/1BM3u4yy7EX1rqH6TS8-MNZv0u7Xz_vxqD4uKV4QC538/edit" target="_blank" style="display:block;margin-top:8px;font-size:.75rem;color:var(--am);text-decoration:underline;">📊 Ver Caja en Google Sheets</a>
+</header>
+
+<div class="cfg">
+  <div class="clbl">⚙️ Configurar partido</div>
+  <div class="row">
+    <input type="date" id="iFecha"/>
+    <input type="text" id="iEvento" placeholder="Ej: Independiente vs Alumni"/>
+  </div>
+  <div class="row">
+    <label>Entrada $</label>
+    <input type="number" id="iPrecio" placeholder="6000" min="0" inputmode="numeric" style="max-width:110px;"/>
+    <div class="trow">
+      <span class="tlbl"><strong>ABT</strong></span>
+      <input type="number" id="iAbt" placeholder="1000" min="0" inputmode="numeric" style="max-width:80px;"/>
+      <label class="tgl"><input type="checkbox" id="tAbt"/><span class="tgls"></span></label>
+    </div>
+    <button class="bset" onclick="setPartido()">SET</button>
+  </div>
+</div>
+
+<div class="barra" id="barra">Sin partido configurado</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="go('ing',this)">💰 Ingreso</button>
+  <button class="tab" onclick="go('eg',this)">📤 Egreso</button>
+  <button class="tab" onclick="go('movs',this)">📋 Movs.</button>
+  <button class="tab" onclick="go('res',this)">📊 Resumen</button>
+  <button class="tab" onclick="go('hist',this)">📅 Historial</button>
+</div>
+
+<div class="panel on" id="panel-ing">
+  <button class="btn nuevo" onclick="nuevoPartido()">🏀 Nuevo partido</button>
+  <div class="fc">
+    <h3>Registrar Ingreso</h3>
+    <div class="campo">
+      <label>Tipo de pago</label>
+      <div class="tipo">
+        <div class="tbtn vi" id="bE" onclick="selT('efvo')">💵 Efectivo</div>
+        <div class="tbtn" id="bT" onclick="selT('transf')">📲 Transferencia</div>
+      </div>
+    </div>
+    <div class="campo">
+      <label>Cantidad de entradas</label>
+      <input type="number" id="cant" placeholder="Ej: 10" min="1" inputmode="numeric"/>
+    </div>
+    <div class="campo" style="background:rgba(39,174,96,.08);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:.7rem;color:var(--su);text-transform:uppercase;margin-bottom:3px;">Total</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--verde)" id="prev">$0</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.7rem;color:var(--su);text-transform:uppercase;margin-bottom:3px;">Precio</div>
+        <div style="font-size:.9rem;color:var(--su);font-weight:600;" id="pLbl">$6.000</div>
+      </div>
+    </div>
+    <button class="btn ing" onclick="regI()">✅ Registrar Ingreso</button>
+  </div>
+</div>
+
+<div class="panel" id="panel-eg">
+  <div class="fc">
+    <h3>Registrar Egreso</h3>
+    <div class="campo">
+      <label>Concepto</label>
+      <div class="tipo">
+        <div class="tbtn ve" id="bM" onclick="selC('mesa')">🎛 Mesa Control</div>
+        <div class="tbtn" id="bA" onclick="selC('arbitros')">🟨 Árbitros</div>
+      </div>
+    </div>
+    <div class="campo">
+      <label>Monto ($)</label>
+      <input type="number" id="monto" placeholder="Ej: 5000" min="0" inputmode="numeric"/>
+    </div>
+    <div class="campo">
+      <label>Nota (opcional)</label>
+      <input type="text" id="nota" placeholder="Ej: 2 árbitros turno tarde"/>
+    </div>
+    <button class="btn eg" onclick="regE()">📤 Registrar Egreso</button>
+  </div>
+</div>
+
+<div class="panel" id="panel-movs">
+  <p style="font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin-bottom:10px;">Movimientos del partido actual</p>
+  <div id="listaMov"><p class="empty">Sin movimientos aún.</p></div>
+</div>
+
+<div class="panel" id="panel-res">
+  <div id="resWrap"></div>
+  <button class="btn cerrar" onclick="cerrarPartido()">🔒 Cerrar y guardar partido actual</button>
+</div>
+
+<div class="panel" id="panel-hist">
+  <div id="calWrap"></div>
+</div>
+
+<div class="ov" id="modal">
+  <div class="mbox">
+    <div class="mtop">
+      <div class="mtit" id="mTit">—</div>
+      <button class="mclose" onclick="cerrarModal()">✕</button>
+    </div>
+    <div id="mBody"></div>
+  </div>
+</div>
+
+<script>
+  let ABT_X=1000; const KH='eb4_h', KM='eb4_m', KC='eb4_c';
+  let hist=[], movs=[], cfg={precio:6000,abt:false,evento:'',fecha:''};
+  let tipoPago='efvo', concepto='mesa';
+  let calA=new Date().getFullYear(), calM=new Date().getMonth();
+
+  function lsG(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}
+  function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function cp(x){return JSON.parse(JSON.stringify(x));} // deep copy
+
+  function cargar(){
+    hist=lsG(KH)||[];
+    movs=lsG(KM)||[];
+    cfg=lsG(KC)||{precio:6000,abt:false,evento:'',fecha:''};
+  }
+  function guardar(){lsS(KH,hist);lsS(KM,movs);lsS(KC,cfg);}
+
+  function fmt(n){return Math.round(n).toLocaleString('es-AR');}
+  function ahora(){return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}
+  function fmtF(f){
+    if(!f)return'—';
+    const[y,m,d]=f.split('-');
+    return`${parseInt(d)} ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]} ${y}`;
+  }
+
+  // Calcula totales de un array de movimientos INDEPENDIENTE
+  function calcT(arr,abt,abtMonto){
+    const efvo  =arr.filter(x=>x.t==='i'&&x.s==='efvo').reduce((a,x)=>a+x.m,0);
+    const transf=arr.filter(x=>x.t==='i'&&x.s==='transf').reduce((a,x)=>a+x.m,0);
+    const mesa  =arr.filter(x=>x.t==='e'&&x.s==='mesa').reduce((a,x)=>a+x.m,0);
+    const arb   =arr.filter(x=>x.t==='e'&&x.s==='arbitros').reduce((a,x)=>a+x.m,0);
+    const ent   =arr.filter(x=>x.t==='i').reduce((a,x)=>a+(x.c||0),0);
+    const xAbt  =abtMonto||ABT_X;
+    const abtM  =abt?ent*xAbt:0;
+    return{efvo,transf,mesa,arb,ing:efvo+transf,eg:mesa+arb,ent,abt:abtM,abtMonto:xAbt,saldo:efvo+transf-mesa-arb-abtM};
+  }
+
+  function actualizarBarra(){
+    const p=[];
+    if(cfg.fecha) p.push(`<span>${fmtF(cfg.fecha)}</span>`);
+    if(cfg.evento) p.push(cfg.evento);
+    p.push('$'+fmt(cfg.precio)+'/entrada');
+    if(cfg.abt) p.push('ABT $'+fmt(cfg.abtMonto||ABT_X)+'/ent.');
+    document.getElementById('barra').innerHTML=p.length?p.join(' · '):'Sin partido configurado';
+  }
+
+  function go(id,btn){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    document.getElementById('panel-'+id).classList.add('on');
+    btn.classList.add('on');
+    if(id==='movs') renderMovs();
+    if(id==='res')  renderRes();
+    if(id==='hist') renderCal();
+  }
+
+  function setPartido(){
+    const n=document.getElementById('iEvento').value.trim();
+    const f=document.getElementById('iFecha').value;
+    const p=parseFloat(document.getElementById('iPrecio').value);
+    if(!n&&!f){alert('Ingresá al menos nombre o fecha.');return;}
+    cfg.evento=n; cfg.fecha=f;
+    if(p>0){cfg.precio=p; document.getElementById('pLbl').textContent='$'+fmt(p);}
+    cfg.abt=document.getElementById('tAbt').checked;
+    const abtVal=parseFloat(document.getElementById('iAbt').value);
+    if(abtVal>0){cfg.abtMonto=abtVal; ABT_X=abtVal;}
+    guardar(); actualizarBarra(); calcPrev();
+    toast('✅ Partido configurado');
+  }
+
+  function nuevoPartido(){
+    if(movs.length&&!confirm('¿Nuevo partido? Se borran los movimientos actuales.'))return;
+    movs=[]; cfg.evento=''; cfg.fecha=''; cfg.abt=false;
+    guardar();
+    ['iEvento','iFecha'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('tAbt').checked=false;
+    document.getElementById('cant').value='';
+    document.getElementById('prev').textContent='$0';
+    document.getElementById('monto').value='';
+    document.getElementById('nota').value='';
+    document.getElementById('listaMov').innerHTML='<p class="empty">Sin movimientos aún.</p>';
+    actualizarBarra();
+    toast('✅ Listo para nuevo partido');
+  }
+
+  function selT(t){tipoPago=t;document.getElementById('bE').className='tbtn'+(t==='efvo'?' vi':'');document.getElementById('bT').className='tbtn'+(t==='transf'?' vi':'');calcPrev();}
+  function calcPrev(){const c=parseFloat(document.getElementById('cant').value)||0;document.getElementById('prev').textContent='$'+fmt(c*cfg.precio);}
+  document.getElementById('cant').addEventListener('input',calcPrev);
+
+  function regI(){
+    const c=parseFloat(document.getElementById('cant').value);
+    if(!c){alert('Ingresá la cantidad.');return;}
+    movs.push({t:'i',s:tipoPago,c,m:c*cfg.precio,h:ahora(),id:Date.now()});
+    guardar();
+    document.getElementById('cant').value='';
+    document.getElementById('prev').textContent='$0';
+    toast('✅ Ingreso registrado');
+  }
+
+  function selC(x){concepto=x;document.getElementById('bM').className='tbtn'+(x==='mesa'?' ve':'');document.getElementById('bA').className='tbtn'+(x==='arbitros'?' ve':'');}
+
+  function regE(){
+    const m=parseFloat(document.getElementById('monto').value);
+    if(!m){alert('Ingresá el monto.');return;}
+    const n=document.getElementById('nota').value.trim();
+    movs.push({t:'e',s:concepto,m,n,h:ahora(),id:Date.now()});
+    guardar();
+    document.getElementById('monto').value='';
+    document.getElementById('nota').value='';
+    toast('📤 Egreso registrado');
+  }
+
+  function renderMovs(){
+    const el=document.getElementById('listaMov');
+    if(!movs.length){el.innerHTML='<p class="empty">Sin movimientos aún.</p>';return;}
+    el.innerHTML=[...movs].reverse().map(m=>{
+      const lbl=m.t==='i'?(m.s==='efvo'?'💵 Efectivo':'📲 Transferencia'):(m.s==='mesa'?'🎛 Mesa Control':'🟨 Árbitros');
+      const det=[m.n,m.h].filter(Boolean).join(' · ');
+      const sg=m.t==='i'?'+':'-';
+      return`<div class="mi ${m.t==='i'?'i':'e'}">
+        <div><div class="mtp">${lbl}</div>${det?`<div class="mdt">${det}</div>`:''}</div>
+        <div style="display:flex;align-items:center;">
+          <div class="mmo">${sg}$${fmt(m.m)}</div>
+          <button class="mdl" onclick="borrarMov(${m.id})">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function borrarMov(id){
+    if(!confirm('¿Borrar?'))return;
+    movs=movs.filter(m=>m.id!==id);
+    guardar(); renderMovs();
+  }
+
+  // RESUMEN: cada partido es una tarjeta independiente
+  function renderRes(){
+    const wrap=document.getElementById('resWrap');
+    let html='';
+    // Partido actual
+    if(movs.length){
+      const t=calcT(cp(movs), cfg.abt);
+      html+=`<div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin-bottom:8px;">▶ Partido en curso</div>`;
+      html+=tarjetaPartido('actual', cfg.fecha, cfg.evento||'Partido actual', cfg.abt, cp(movs), t, true);
+    }
+    // Historial — UNO POR UNO, cada partido independiente
+    if(hist.length){
+      html+=`<div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--su);margin:${movs.length?'16px':'0px'} 0 8px;">📋 Partidos cerrados (${hist.length})</div>`;
+      hist.forEach(p=>{
+        const t=calcT(cp(p.movs), p.abt, p.abtMonto||1000); // calcula SOLO con los movimientos de ESE partido
+        html+=tarjetaPartido(p.id, p.fecha, p.nombre||'Sin nombre', p.abt, cp(p.movs), t, false);
+      });
+    }
+    if(!html) html='<p class="empty">Sin partidos.<br>Registrá movimientos o cerrá un partido.</p>';
+    wrap.innerHTML=html;
+  }
+
+  function tarjetaPartido(id, fecha, nombre, abt, arr, t, esActual){
+    // Todos los valores vienen del objeto t ya calculado — no se recalcula nada
+    const abtBlq=abt?`
+      <div class="rg" style="border:1px solid #555;background:#1a1a1a;">
+        <h4>🏛 ABT</h4>
+        <div class="rf"><span class="l">Entradas vendidas</span><span class="v">${t.ent}</span></div>
+        <div class="rf"><span class="l">$${fmt(t.abtMonto||ABT_X)} × ${t.ent} entradas</span><span class="v" style="color:var(--am)">$${fmt(t.abt)}</span></div>
+        <div style="margin-top:6px;font-size:.7rem;color:var(--su)">No forma parte del saldo del club.</div>
+      </div>`:'';
+    // Movimientos — solo los de arr, ya aislados con cp() antes de llamar a esta función
+    const movsList=arr.map(m=>{
+      const lbl=m.t==='i'?(m.s==='efvo'?'💵 Efectivo':'📲 Transferencia'):(m.s==='mesa'?'🎛 Mesa Control':'🟨 Árbitros');
+      const sg=m.t==='i'?'+':'-'; const col=m.t==='i'?'var(--verde)':'var(--rc)';
+      const det=[m.n,m.h].filter(Boolean).join(' · ');
+      return`<div class="pt-mov"><span class="ml">${lbl}${det?' · '+det:''}</span><span style="color:${col}">${sg}$${fmt(m.m)}</span></div>`;
+    }).join('');
+    const delBtn=esActual?'':`<button class="bdel" onclick="borrarPartidoRes(${id})">🗑 Eliminar</button>`;
+    const editBtn=esActual?'':`<button class="btn" style="border:2px solid var(--am);background:none;color:var(--am);margin-top:8px;" onclick="abrirEdit(${id})">✏️ Editar partido</button>`;
+    // Valores hardcodeados del objeto t — nunca toca variables globales
+    return`<div class="ptarjeta" id="pt-${id}">
+      <div class="pt-header" onclick="toggleTarjeta('${id}')">
+        <div class="pt-left">
+          <div class="pt-fecha">${esActual?'🏀 EN CURSO':fmtF(fecha)}</div>
+          <div class="pt-nombre">${nombre}</div>
+        </div>
+        <div class="pt-right">
+          <div class="pt-saldo">$${fmt(t.saldo)}</div>
+          <div class="pt-slab">saldo club</div>
+        </div>
+      </div>
+      <div class="pt-body" id="ptb-${id}">
+        <div class="rg">
+          <h4>💰 Ingresos</h4>
+          <div class="rf"><span class="l">Efectivo</span><span class="v verde">$${fmt(t.efvo)}</span></div>
+          <div class="rf"><span class="l">Transferencia</span><span class="v verde">$${fmt(t.transf)}</span></div>
+          <div class="rf"><span class="l" style="font-weight:700;color:var(--tx)">Total</span><span class="v verde">$${fmt(t.ing)}</span></div>
+        </div>
+        <div class="rg">
+          <h4>📤 Egresos</h4>
+          <div class="rf"><span class="l">Mesa de Control</span><span class="v rojo">$${fmt(t.mesa)}</span></div>
+          <div class="rf"><span class="l">Árbitros</span><span class="v rojo">$${fmt(t.arb)}</span></div>
+          <div class="rf"><span class="l" style="font-weight:700;color:var(--tx)">Total</span><span class="v rojo">$${fmt(t.eg)}</span></div>
+        </div>
+        ${abtBlq}
+        <div class="sbox"><div class="sl">Saldo Final del Club</div><div class="sm">$${fmt(t.saldo)}</div></div>
+        <button class="btn copiar" onclick="copiarWA_partido('${id}',${esActual})">📋 Copiar para WhatsApp</button>
+        <button class="btn" style="border:2px solid #27ae60;background:none;color:#27ae60;margin-top:8px;" onclick="guardarEnCaja('${id}',${esActual})">📊 Guardar en Caja</button>
+        ${editBtn}
+        <div class="pt-movs">
+          <div class="ms">📋 Movimientos</div>
+          ${movsList||'<span style="color:var(--su);font-size:.8rem">Sin movimientos</span>'}
+        </div>
+        ${delBtn}
+      </div>
+    </div>`;
+  }
+
+  function toggleTarjeta(id){
+    const b=document.getElementById('ptb-'+id);
+    if(b) b.classList.toggle('on');
+  }
+
+  function borrarPartidoRes(id){
+    if(!confirm('¿Eliminar este partido?'))return;
+    hist=hist.filter(p=>p.id!==id);
+    guardarHist(); renderRes();
+  }
+
+  function copiarWA_partido(id, esActual){
+    let arr, abt, fecha, nombre;
+    if(esActual){arr=cp(movs);abt=cfg.abt;fecha=cfg.fecha;nombre=cfg.evento;}
+    else{const p=hist.find(x=>x.id==id);if(!p)return;arr=cp(p.movs);abt=p.abt;fecha=p.fecha;nombre=p.nombre;ABT_X=p.abtMonto||ABT_X;}
+    const t=calcT(arr,abt);
+    let txt='🏀 *ENTRADAS BÁSQUET — TANDIL*\n';
+    if(fecha)  txt+=`📅 ${fmtF(fecha)}\n`;
+    if(nombre) txt+=`🏟 ${nombre}\n`;
+    txt+=`\n💰 *INGRESOS*\n💵 Efectivo: $${fmt(t.efvo)}\n📲 Transferencia: $${fmt(t.transf)}\n▸ Total: $${fmt(t.ing)}\n`;
+    txt+=`\n📤 *EGRESOS CLUB*\n🎛 Mesa Control: $${fmt(t.mesa)}\n🟨 Árbitros: $${fmt(t.arb)}\n▸ Total: $${fmt(t.eg)}\n`;
+    if(abt) txt+=`\n🏛 *ABT*\nEntradas vendidas: ${t.ent}\n▸ A entregar: $${fmt(t.abt)} ($${fmt(ABT_X)} × entrada)\n`;
+    txt+=`\n✅ *SALDO FINAL CLUB: $${fmt(t.saldo)}*`;
+    const el=document.createElement('textarea');
+    el.value=txt; el.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px;';
+    document.body.appendChild(el); el.focus(); el.select();
+    try{document.execCommand('copy');toast('✅ ¡Copiado! Pegalo en WhatsApp');}
+    catch(e){toast('No se pudo copiar');}
+    document.body.removeChild(el);
+  }
+
+  function cerrarPartido(){
+    if(!movs.length){alert('No hay movimientos para cerrar.');return;}
+    if(!confirm('¿Cerrar y guardar este partido?'))return;
+    const snapshot=cp(movs); // copia exacta, independiente
+    const t=calcT(snapshot, cfg.abt);
+    hist.unshift({id:Date.now(),fecha:cfg.fecha,nombre:cfg.evento,abt:cfg.abt,abtMonto:cfg.abtMonto||ABT_X,movs:snapshot,totales:t});
+    movs=[]; cfg.evento=''; cfg.fecha='';
+    guardarHist();
+    ['iEvento','iFecha'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('listaMov').innerHTML='<p class="empty">Sin movimientos aún.</p>';
+    actualizarBarra();
+    alert('✅ Partido guardado.\nYa aparece en 📊 Resumen y 📅 Historial.');
+  }
+
+  // CALENDARIO
+  function renderCal(){
+    const wrap=document.getElementById('calWrap');
+    const MESES=['Enero','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const DIAS=['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
+    const diasCP=new Set(hist.filter(p=>p.fecha).map(p=>p.fecha));
+    const hoy=new Date();
+    const inicio=new Date(calA,calM,1).getDay();
+    const total=new Date(calA,calM+1,0).getDate();
+    let h=`<div class="cal-nav">
+      <button class="cal-btn" onclick="calAnt()">‹</button>
+      <div class="cal-mes">${MESES[calM]} ${calA}</div>
+      <button class="cal-btn" onclick="calSig()">›</button>
+    </div><div class="cal-grid">`;
+    DIAS.forEach(d=>h+=`<div class="cdl">${d}</div>`);
+    for(let i=0;i<inicio;i++) h+='<div class="cd vacio"></div>';
+    for(let d=1;d<=total;d++){
+      const key=`${calA}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const esHoy=hoy.getDate()===d&&hoy.getMonth()===calM&&hoy.getFullYear()===calA;
+      const cp2=diasCP.has(key);
+      h+=`<div class="cd${cp2?' cp':''}${esHoy?' hoy':''}">
+        ${cp2?'<div class="cball">🏀</div>':''}
+        <div class="cdn">${d}</div>
+      </div>`;
+    }
+    h+='</div>';
+    const prefix=`${calA}-${String(calM+1).padStart(2,'0')}`;
+    const delMes=hist.filter(p=>p.fecha&&p.fecha.startsWith(prefix));
+    if(delMes.length){
+      h+='<div style="margin-top:16px;">';
+      delMes.forEach(p=>{
+        h+=`<div class="pl" onclick="abrirModal(${p.id})">
+          <div><div class="pl-f">${fmtF(p.fecha)}</div><div class="pl-n">${p.nombre||'Sin nombre'}</div></div>
+          <div><div class="pl-s">$${fmt(p.totales.saldo)}</div><div class="pl-sl">saldo club</div></div>
+        </div>`;
+      });
+      h+='</div>';
+    } else {
+      h+='<p class="empty" style="margin-top:20px;">Sin partidos este mes.</p>';
+    }
+    wrap.innerHTML=h;
+  }
+
+  function calAnt(){calM--;if(calM<0){calM=11;calA--;}renderCal();}
+  function calSig(){calM++;if(calM>11){calM=0;calA++;}renderCal();}
+
+  function abrirModal(id){
+    const p=hist.find(x=>x.id===id);
+    if(!p) return;
+    const t=p.totales;
+    document.getElementById('mTit').textContent=fmtF(p.fecha)+(p.nombre?' · '+p.nombre:'');
+    let h='<div class="msec">💰 Ingresos</div>';
+    h+=`<div class="mf"><span class="ml">Efectivo</span><span style="color:var(--verde)">$${fmt(t.efvo)}</span></div>`;
+    h+=`<div class="mf"><span class="ml">Transferencia</span><span style="color:var(--verde)">$${fmt(t.transf)}</span></div>`;
+    h+=`<div class="mf"><span class="ml"><b>Total</b></span><span style="color:var(--verde);font-weight:700">$${fmt(t.ing)}</span></div>`;
+    h+='<div class="msec">📤 Egresos</div>';
+    h+=`<div class="mf"><span class="ml">Mesa Control</span><span style="color:var(--rc)">$${fmt(t.mesa)}</span></div>`;
+    h+=`<div class="mf"><span class="ml">Árbitros</span><span style="color:var(--rc)">$${fmt(t.arb)}</span></div>`;
+    h+=`<div class="mf"><span class="ml"><b>Total</b></span><span style="color:var(--rc);font-weight:700">$${fmt(t.eg)}</span></div>`;
+    if(p.abt){h+='<div class="msec">🏛 ABT</div>';h+=`<div class="mf"><span class="ml">Entradas (${t.ent}) × $${fmt(t.abtMonto||p.abtMonto||1000)}</span><span style="color:var(--am)">-$${fmt(t.abt)}</span></div>`;}
+    h+='<div class="msec">📋 Movimientos</div>';
+    p.movs.forEach(m=>{
+      const lbl=m.t==='i'?(m.s==='efvo'?'💵 Efectivo':'📲 Transferencia'):(m.s==='mesa'?'🎛 Mesa Control':'🟨 Árbitros');
+      const sg=m.t==='i'?'+':'-'; const col=m.t==='i'?'var(--verde)':'var(--rc)';
+      const det=[m.n,m.h].filter(Boolean).join(' · ');
+      h+=`<div class="mmv"><span class="mml">${lbl}${det?' · '+det:''}</span><span style="color:${col}">${sg}$${fmt(m.m)}</span></div>`;
+    });
+    h+=`<div class="msaldo"><div class="msl">Saldo Final del Club</div><div class="msm">$${fmt(t.saldo)}</div></div>`;
+    h+=`<button class="bdel" onclick="borrarPartido(${p.id})">🗑 Eliminar este registro</button>`;
+    document.getElementById('mBody').innerHTML=h;
+    document.getElementById('modal').classList.add('on');
+  }
+
+  function cerrarModal(){document.getElementById('modal').classList.remove('on');}
+
+  function borrarPartido(id){
+    if(!confirm('¿Eliminar?'))return;
+    hist=hist.filter(p=>p.id!==id);
+    guardarHist(); cerrarModal(); renderCal();
+  }
+
+
+  // ── EDICIÓN ─────────────────────────────────────────────
+  let editId = null;
+
+  function abrirEdit(id){
+    const p=hist.find(x=>x.id===id);
+    if(!p) return;
+    editId=id;
+    document.getElementById('eFecha').value=p.fecha||'';
+    document.getElementById('eNombre').value=p.nombre||'';
+    document.getElementById('ePrecio').value=p.movs.length&&p.movs[0].t==='i'?Math.round(p.movs.find(m=>m.t==='i')?.m/(p.movs.find(m=>m.t==='i')?.c||1)):6000;
+    renderEditMovs(cp(p.movs));
+    document.getElementById('editOverlay').classList.add('on');
+  }
+
+  function renderEditMovs(arr){
+    const wrap=document.getElementById('eMovs');
+    wrap.innerHTML=arr.map((m,i)=>{
+      const lbl=m.t==='i'?(m.s==='efvo'?'💵 Efectivo':'📲 Transferencia'):(m.s==='mesa'?'🎛 Mesa Control':'🟨 Árbitros');
+      const campoExtra=m.t==='i'
+        ?`<input type="number" placeholder="Cantidad entradas" value="${m.c||''}" oninput="actualizarEditMov(${i},'c',this.value)" style="margin-top:4px;"/>
+          <input type="number" placeholder="Monto total ($)" value="${m.m||''}" oninput="actualizarEditMov(${i},'m',this.value)" style="margin-top:4px;"/>`
+        :`<input type="number" placeholder="Monto ($)" value="${m.m||''}" oninput="actualizarEditMov(${i},'m',this.value)" style="margin-top:4px;"/>
+          <input type="text" placeholder="Nota (opcional)" value="${m.n||''}" oninput="actualizarEditMov(${i},'n',this.value)" style="margin-top:4px;"/>`;
+      return`<div class="edit-mov" id="emov-${i}">
+        <div class="edit-mov-top">
+          <div class="edit-mov-lbl">${lbl}</div>
+          <button class="edit-mov-del" onclick="elimEditMov(${i})">🗑</button>
+        </div>
+        ${campoExtra}
+      </div>`;
+    }).join('');
+    // Guardar en variable temporal
+    wrap.dataset.movs=JSON.stringify(arr);
+  }
+
+  function actualizarEditMov(i,campo,valor){
+    const arr=JSON.parse(document.getElementById('eMovs').dataset.movs);
+    if(campo==='c'||campo==='m') arr[i][campo]=parseFloat(valor)||0;
+    else arr[i][campo]=valor;
+    document.getElementById('eMovs').dataset.movs=JSON.stringify(arr);
+  }
+
+  function elimEditMov(i){
+    if(!confirm('¿Eliminar este movimiento?'))return;
+    const arr=JSON.parse(document.getElementById('eMovs').dataset.movs);
+    arr.splice(i,1);
+    renderEditMovs(arr);
+  }
+
+  function guardarEdit(){
+    const p=hist.find(x=>x.id===editId);
+    if(!p) return;
+    p.fecha=document.getElementById('eFecha').value;
+    p.nombre=document.getElementById('eNombre').value.trim();
+    const movsEditados=JSON.parse(document.getElementById('eMovs').dataset.movs||'[]');
+    p.movs=movsEditados;
+    p.totales=calcT(cp(movsEditados),p.abt);
+    guardar();
+    cerrarEdit();
+    renderRes();
+    toast('✅ Partido actualizado');
+  }
+
+  function cerrarEdit(){
+    document.getElementById('editOverlay').classList.remove('on');
+    editId=null;
+  }
+
+  function guardarEnCaja(id, esActual){
+    let arr, abt, fecha, nombre, abtMonto;
+    if(esActual){arr=cp(movs);abt=cfg.abt;fecha=cfg.fecha;nombre=cfg.evento;abtMonto=cfg.abtMonto||ABT_X;}
+    else{const p=hist.find(x=>x.id==id);if(!p)return;arr=cp(p.movs);abt=p.abt;fecha=p.fecha;nombre=p.nombre;abtMonto=p.abtMonto||1000;}
+    const t=calcT(arr,abt,abtMonto);
+    const datos={
+      efvo:t.efvo, transf:t.transf, ing:t.ing,
+      mesa:t.mesa, arb:t.arb, eg:t.eg,
+      abt:t.abt, abtMonto:abtMonto, ent:t.ent,
+      saldo:t.saldo,
+      movs:arr
+    };
+    const url = CAJA_URL + '?nombre=' + encodeURIComponent(nombre||'Sin nombre') +
+                '&fecha=' + encodeURIComponent(fecha||'') +
+                '&datos=' + encodeURIComponent(JSON.stringify(datos));
+    toast('📤 Guardando en Caja...');
+    fetch(url)
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.ok){
+          toast('✅ Guardado en Caja — pestaña: '+d.tab);
+        } else {
+          toast('❌ Error: '+d.error);
+        }
+      })
+      .catch(e=>toast('❌ Error al guardar'));
+  }
+
+  function abrirSheet(){
+    window.open(SHEET_URL, '_blank');
+  }
+
+  function toast(msg){
+    const t=document.createElement('div');
+    t.textContent=msg;
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:.9rem;z-index:999;font-weight:600;white-space:nowrap;';
+    document.body.appendChild(t); setTimeout(()=>t.remove(),2500);
+  }
+
+  cargar();
+  document.getElementById('iPrecio').value=cfg.precio;
+  document.getElementById('pLbl').textContent='$'+fmt(cfg.precio);
+  document.getElementById('iAbt').value=cfg.abtMonto||1000;
+  document.getElementById('tAbt').checked=cfg.abt;
+  if(cfg.evento) document.getElementById('iEvento').value=cfg.evento;
+  if(cfg.fecha)  document.getElementById('iFecha').value=cfg.fecha;
+  actualizarBarra();
+  renderMovs();
+</script>
+
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-header">
+    <div class="edit-tit">✏️ Editar Partido</div>
+    <button class="edit-close" onclick="cerrarEdit()">✕</button>
+  </div>
+  <div class="edit-field">
+    <label>Fecha</label>
+    <input type="date" id="eFecha"/>
+  </div>
+  <div class="edit-field">
+    <label>Nombre del partido</label>
+    <input type="text" id="eNombre" placeholder="Ej: Independiente vs Alumni"/>
+  </div>
+  <div class="edit-field">
+    <label>Precio de entrada ($)</label>
+    <input type="number" id="ePrecio" inputmode="numeric"/>
+  </div>
+  <div class="edit-sec">Movimientos</div>
+  <div id="eMovs"></div>
+  <button class="btn-save" onclick="guardarEdit()">💾 Guardar cambios</button>
+</div>
+</body>
+</html>
