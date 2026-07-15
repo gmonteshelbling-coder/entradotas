@@ -499,13 +499,34 @@
     if(!confirm('¿Cerrar y guardar este partido?'))return;
     const snapshot=cp(movs); // copia exacta, independiente
     const t=calcT(snapshot, cfg.abt);
+    const nombrePartido = cfg.evento;
+    const fechaPartido  = cfg.fecha;
     hist.unshift({id:Date.now(),fecha:cfg.fecha,nombre:cfg.evento,abt:cfg.abt,abtMonto:cfg.abtMonto||ABT_X,movs:snapshot,totales:t});
     movs=[]; cfg.evento=''; cfg.fecha='';
     guardarHist();
     ['iEvento','iFecha'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('listaMov').innerHTML='<p class="empty">Sin movimientos aún.</p>';
     actualizarBarra();
-    alert('✅ Partido guardado.\nYa aparece en 📊 Resumen y 📅 Historial.');
+    // Enviar a Google Sheets automáticamente
+    const datosSheet={
+      efvo:snapshot.filter(m=>m.t==='i'&&m.s==='efvo').reduce((a,x)=>a+x.m,0),
+      transf:snapshot.filter(m=>m.t==='i'&&m.s==='transf').reduce((a,x)=>a+x.m,0),
+      mesa:snapshot.filter(m=>m.t==='e'&&m.s==='mesa').reduce((a,x)=>a+x.m,0),
+      arb:snapshot.filter(m=>m.t==='e'&&m.s==='arbitros').reduce((a,x)=>a+x.m,0),
+      ing:t.ing, eg:t.eg, abt:t.abt, abtMonto:cfg.abtMonto||ABT_X,
+      ent:t.ent, saldo:t.saldo, movs:snapshot
+    };
+    const cajaUrl = CAJA_URL + '?nombre=' + encodeURIComponent(nombrePartido||'Sin nombre') +
+                    '&fecha=' + encodeURIComponent(fechaPartido||'') +
+                    '&datos=' + encodeURIComponent(JSON.stringify(datosSheet));
+    const a = document.createElement('a');
+    a.href = cajaUrl;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alert('✅ Partido guardado.\nSe abrió una pestaña — cerrala y el partido quedó en el Sheet.');
   }
 
   // CALENDARIO
