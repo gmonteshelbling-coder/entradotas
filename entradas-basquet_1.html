@@ -254,8 +254,38 @@
   function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
   function cp(x){return JSON.parse(JSON.stringify(x));}
 
+  function hoyISO(ts){
+    const d = ts ? new Date(ts) : new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
   function cargar(){
     hist=lsG(KH)||[];
+    // Recuperar historial de cualquier version anterior de la app
+    try{
+      const ids = {};
+      hist.forEach(function(p){ ids[p.id]=1; });
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k===KH) continue;
+        let v=null;
+        try{ v = JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+        if(!Array.isArray(v) || !v.length) continue;
+        // Detectar si parece un historial de partidos
+        const m = v[0];
+        if(!m || typeof m!=='object' || !m.movs || !m.totales) continue;
+        v.forEach(function(p){
+          if(p && p.id && !ids[p.id]){ hist.push(p); ids[p.id]=1; }
+        });
+      }
+      hist.sort(function(a,b){ return (b.id||0)-(a.id||0); });
+    }catch(e){}
+    // Completar fecha faltante usando el momento en que se cerro el partido
+    let cambio=false;
+    hist.forEach(function(p){
+      if(!p.fecha && p.id){ p.fecha=hoyISO(p.id); cambio=true; }
+    });
+    if(hist.length) lsS(KH,hist);
     movs=lsG(KM)||[];
     cfg=lsG(KC)||{precio:6000,abt:false,abtMonto:1000,evento:'',fecha:''};
   }
@@ -427,7 +457,7 @@
     const snapshot=cp(movs);
     const t=calcT(snapshot,cfg.abt,cfg.abtMonto);
     const nombrePartido=cfg.evento;
-    const fechaPartido=cfg.fecha;
+    const fechaPartido=cfg.fecha||hoyISO();
     const abtMonto=cfg.abtMonto||ABT_X_DEF;
     hist.unshift({id:Date.now(),fecha:fechaPartido,nombre:nombrePartido,abt:cfg.abt,abtMonto,movs:snapshot,totales:t});
     movs=[]; cfg.evento=''; cfg.fecha='';
@@ -533,9 +563,9 @@
     if(fecha) txt+='📅 '+fmtF(fecha)+'\n';
     if(nombre) txt+='🏟 '+nombre+'\n';
     txt+='\n💰 *INGRESOS*\n💵 Efectivo: $'+fmt(t.efvo)+'\n📲 Transferencia: $'+fmt(t.transf)+'\n▸ Total: $'+fmt(t.ing)+'\n';
-    txt+='\n📤 *EGRESOS CLUB*\n🎛 Mesa Control: $'+fmt(t.mesa)+'\n🟨 Árbitros: $'+fmt(t.arb)+'\n▸ Total: $'+fmt(t.eg)+'\n';
+    txt+='\n📤 *EGRESOS SUBCOMISIÓN DE BÁSQUET MENOR*\n🎛 Mesa Control: $'+fmt(t.mesa)+'\n🟨 Árbitros: $'+fmt(t.arb)+'\n▸ Total: $'+fmt(t.eg)+'\n';
     if(abt) txt+='\n🏛 *ABT*\nEntradas vendidas: '+t.ent+'\n▸ A entregar: $'+fmt(t.abt)+' ($'+fmt(abtMonto)+' × entrada)\n';
-    txt+='\n✅ *SALDO FINAL CLUB: $'+fmt(t.saldo)+'*';
+    txt+='\n✅ *SALDO FINAL SUBCOMISIÓN DE BÁSQUET MENOR: $'+fmt(t.saldo)+'*';
     const el=document.createElement('textarea');
     el.value=txt; el.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px;';
     document.body.appendChild(el); el.focus(); el.select();
