@@ -148,10 +148,22 @@
   <div class="row">
     <label>Entrada $</label>
     <input type="number" id="iPrecio" value="6000" min="0" inputmode="numeric" style="max-width:120px;"/>
-    <div class="trow">
-      <span class="tlbl"><strong>ABT</strong> $</span>
-      <input type="number" id="iAbt" value="1000" min="0" inputmode="numeric" style="max-width:90px;flex:none;"/>
-      <label class="tgl"><input type="checkbox" id="tAbt"/><span class="tgls"></span></label>
+    <label style="margin-left:8px;">Retención $</label>
+    <input type="number" id="iAbt" value="1000" min="0" inputmode="numeric" style="max-width:100px;"/>
+  </div>
+  <div class="row">
+    <label style="min-width:74px;">Entidad</label>
+    <div class="tipo" style="flex:1;">
+      <div class="tbtn" id="bNin" onclick="selAsoc('')">Sin ret.</div>
+      <div class="tbtn" id="bAMB" onclick="selAsoc('AMB')">AMB</div>
+      <div class="tbtn" id="bABT" onclick="selAsoc('ABT')">ABT</div>
+    </div>
+  </div>
+  <div class="row">
+    <label style="min-width:74px;">División</label>
+    <div class="tipo" style="flex:1;">
+      <div class="tbtn" id="bForm" onclick="selDiv('Formativa')">Formativa</div>
+      <div class="tbtn" id="bPrim" onclick="selDiv('Primera')">Primera</div>
     </div>
     <button class="bset" onclick="setPartido()">SET</button>
   </div>
@@ -246,7 +258,7 @@
 <script>
   const CAJA_URL='https://script.google.com/macros/s/AKfycby-t8vLsVmn6uXwKoQezpvYIOPw7I-MgNM2barG8EvKdc9cSnct8stdZ1uM8n3GBstD/exec';
   const ABT_X_DEF=1000, KH='eb5_h', KM='eb5_m', KC='eb5_c';
-  let hist=[], movs=[], cfg={precio:6000,abt:false,abtMonto:1000,evento:'',fecha:''};
+  let hist=[], movs=[], cfg={precio:6000,asoc:'',abtMonto:1000,div:'Formativa',evento:'',fecha:''};
   let tipoPago='efvo', concepto='mesa';
   let calA=new Date().getFullYear(), calM=new Date().getMonth();
 
@@ -287,7 +299,10 @@
     });
     if(hist.length) lsS(KH,hist);
     movs=lsG(KM)||[];
-    cfg=lsG(KC)||{precio:6000,abt:false,abtMonto:1000,evento:'',fecha:''};
+    cfg=lsG(KC)||{precio:6000,asoc:'',abtMonto:1000,div:'Formativa',evento:'',fecha:''};
+    if(cfg.asoc===undefined) cfg.asoc = cfg.abt ? 'ABT' : '';
+    if(!cfg.div) cfg.div='Formativa';
+    if(!cfg.abtMonto) cfg.abtMonto=ABT_X_DEF;
   }
   function guardar(){lsS(KH,hist);lsS(KM,movs);lsS(KC,cfg);}
 
@@ -298,6 +313,10 @@
     const[y,m,d]=f.split('-');
     return parseInt(d)+' '+['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y;
   }
+
+  function asocDe(p){ return p.asoc!==undefined ? p.asoc : (p.abt?'ABT':''); }
+  function montoDe(p){ return p.abtMonto||ABT_X_DEF; }
+  function divDe(p){ return p.div||'Formativa'; }
 
   function calcT(arr,abt,abtMonto){
     const efvo  =arr.filter(x=>x.t==='i'&&x.s==='efvo').reduce((a,x)=>a+x.m,0);
@@ -314,8 +333,9 @@
     const p=[];
     if(cfg.fecha) p.push('<span>'+fmtF(cfg.fecha)+'</span>');
     if(cfg.evento) p.push(cfg.evento);
+    p.push('<span>'+(cfg.div||'Formativa')+'</span>');
     p.push('$'+fmt(cfg.precio)+'/entrada');
-    if(cfg.abt) p.push('ABT $'+fmt(cfg.abtMonto)+'/ent.');
+    if(cfg.asoc) p.push(cfg.asoc+' $'+fmt(cfg.abtMonto)+'/ent.');
     document.getElementById('barra').innerHTML=p.length?p.join(' · '):'Sin partido configurado';
   }
 
@@ -329,6 +349,19 @@
     if(id==='hist') renderCal();
   }
 
+  function selAsoc(a){
+    cfg.asoc=a;
+    document.getElementById('bNin').className='tbtn'+(a===''?' ve':'');
+    document.getElementById('bAMB').className='tbtn'+(a==='AMB'?' vi':'');
+    document.getElementById('bABT').className='tbtn'+(a==='ABT'?' vi':'');
+  }
+
+  function selDiv(d){
+    cfg.div=d;
+    document.getElementById('bForm').className='tbtn'+(d==='Formativa'?' vi':'');
+    document.getElementById('bPrim').className='tbtn'+(d==='Primera'?' vi':'');
+  }
+
   function setPartido(){
     const n=document.getElementById('iEvento').value.trim();
     const f=document.getElementById('iFecha').value;
@@ -338,7 +371,6 @@
     cfg.fecha=f;
     cfg.precio=p;
     cfg.abtMonto=a;
-    cfg.abt=document.getElementById('tAbt').checked;
     document.getElementById('pLbl').textContent='$'+fmt(p);
     guardar();
     actualizarBarra();
@@ -352,10 +384,9 @@
 
   function nuevoPartido(){
     if(movs.length&&!confirm('¿Nuevo partido? Se borran los movimientos actuales.'))return;
-    movs=[]; cfg.evento=''; cfg.fecha=''; cfg.abt=false;
+    movs=[]; cfg.evento=''; cfg.fecha='';
     guardar();
     ['iEvento','iFecha'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('tAbt').checked=false;
     document.getElementById('cant').value='';
     document.getElementById('prev').textContent='$0';
     document.getElementById('monto').value='';
@@ -415,24 +446,24 @@
     let html='';
     if(movs.length){
       lbl.textContent='▶ Partido en curso';
-      const t=calcT(cp(movs),cfg.abt,cfg.abtMonto);
-      html+=tarjeta('actual',cfg.fecha,cfg.evento||'Partido actual',cfg.abt,cfg.abtMonto,cp(movs),t,true);
+      const t=calcT(cp(movs),cfg.asoc,cfg.abtMonto);
+      html+=tarjeta('actual',cfg.fecha,cfg.evento||'Partido actual',cfg.asoc,cfg.abtMonto,cp(movs),t,true,cfg.div);
     } else {
       lbl.textContent='';
     }
     if(hist.length){
       html+='<div class="sec-label" style="margin-top:'+(movs.length?'16px':'0')+'"">📋 Partidos cerrados ('+hist.length+')</div>';
       hist.forEach(p=>{
-        const t=calcT(cp(p.movs),p.abt,p.abtMonto);
-        html+=tarjeta(p.id,p.fecha,p.nombre||'Sin nombre',p.abt,p.abtMonto,cp(p.movs),t,false);
+        const t=calcT(cp(p.movs),asocDe(p),montoDe(p));
+        html+=tarjeta(p.id,p.fecha,p.nombre||'Sin nombre',asocDe(p),montoDe(p),cp(p.movs),t,false,divDe(p));
       });
     }
     if(!html) html='<p class="empty">Sin partidos.<br>Registrá movimientos o cerrá un partido.</p>';
     wrap.innerHTML=html;
   }
 
-  function tarjeta(id,fecha,nombre,abt,abtMonto,arr,t,esActual){
-    const abtBlq=abt?'<div class="rg" style="border:1px solid #555;background:#1a1a1a;"><h4>🏛 ABT</h4><div class="rf"><span class="l">'+t.ent+' entradas × $'+fmt(abtMonto||1000)+'</span><span class="v" style="color:var(--am)">$'+fmt(t.abt)+'</span></div></div>':'';
+  function tarjeta(id,fecha,nombre,abt,abtMonto,arr,t,esActual,divis){
+    const abtBlq=abt?'<div class="rg" style="border:1px solid #555;background:#1a1a1a;"><h4>🏛 '+abt+'</h4><div class="rf"><span class="l">'+t.ent+' entradas × $'+fmt(abtMonto||1000)+'</span><span class="v" style="color:var(--am)">$'+fmt(t.abt)+'</span></div></div>':'';
     const movsList=arr.map(m=>{
       const lbl=m.t==='i'?(m.s==='efvo'?'💵 Efectivo':'📲 Transferencia'):(m.s==='mesa'?'🎛 Mesa Control':'🟨 Árbitros');
       const sg=m.t==='i'?'+':'-'; const col=m.t==='i'?'var(--verde)':'var(--rc)';
@@ -440,7 +471,7 @@
       return '<div class="pt-mov"><span class="ml">'+lbl+(det?' · '+det:'')+'</span><span style="color:'+col+'">'+sg+'$'+fmt(m.m)+'</span></div>';
     }).join('');
     const delBtn=esActual?'':'<button class="bdel" onclick="borrarPartidoRes('+id+')">🗑 Eliminar</button>';
-    return '<div class="ptarjeta" id="pt-'+id+'"><div class="pt-header" onclick="toggleT(\''+id+'\')"><div><div class="pt-fecha">'+(esActual?'🏀 EN CURSO':fmtF(fecha))+'</div><div class="pt-nombre">'+nombre+'</div></div><div><div class="pt-saldo">$'+fmt(t.saldo)+'</div><div class="pt-slab">saldo club</div></div></div><div class="pt-body" id="ptb-'+id+'"><div class="rg"><h4>💰 Ingresos</h4><div class="rf"><span class="l">Efectivo</span><span class="v verde">$'+fmt(t.efvo)+'</span></div><div class="rf"><span class="l">Transferencia</span><span class="v verde">$'+fmt(t.transf)+'</span></div><div class="rf"><span class="l" style="font-weight:700;color:var(--tx)">Total</span><span class="v verde">$'+fmt(t.ing)+'</span></div></div><div class="rg"><h4>📤 Egresos</h4><div class="rf"><span class="l">Mesa de Control</span><span class="v rojo">$'+fmt(t.mesa)+'</span></div><div class="rf"><span class="l">Árbitros</span><span class="v rojo">$'+fmt(t.arb)+'</span></div><div class="rf"><span class="l" style="font-weight:700;color:var(--tx)">Total</span><span class="v rojo">$'+fmt(t.eg)+'</span></div></div>'+abtBlq+'<div class="sbox"><div class="sl">Saldo Final del Club</div><div class="sm">$'+fmt(t.saldo)+'</div></div><button class="btn copiar" onclick="copiarWA(\''+id+'\','+esActual+')">📋 Copiar para WhatsApp</button>'+delBtn+'<div style="margin-top:12px;font-size:.8rem;color:var(--su);">📋 Movimientos</div>'+movsList+'</div></div>';
+    return '<div class="ptarjeta" id="pt-'+id+'"><div class="pt-header" onclick="toggleT(\''+id+'\')"><div><div class="pt-fecha">'+(esActual?'🏀 EN CURSO':fmtF(fecha))+'</div><div class="pt-nombre">'+nombre+'</div><div style="font-size:.75rem;color:var(--su);margin-top:3px;">'+(divis||'Formativa')+(abt?' · '+abt:'')+'</div></div><div><div class="pt-saldo">$'+fmt(t.saldo)+'</div><div class="pt-slab">saldo club</div></div></div><div class="pt-body" id="ptb-'+id+'"><div class="rg"><h4>💰 Ingresos</h4><div class="rf"><span class="l">Efectivo</span><span class="v verde">$'+fmt(t.efvo)+'</span></div><div class="rf"><span class="l">Transferencia</span><span class="v verde">$'+fmt(t.transf)+'</span></div><div class="rf"><span class="l" style="font-weight:700;color:var(--tx)">Total</span><span class="v verde">$'+fmt(t.ing)+'</span></div></div><div class="rg"><h4>📤 Egresos</h4><div class="rf"><span class="l">Mesa de Control</span><span class="v rojo">$'+fmt(t.mesa)+'</span></div><div class="rf"><span class="l">Árbitros</span><span class="v rojo">$'+fmt(t.arb)+'</span></div><div class="rf"><span class="l" style="font-weight:700;color:var(--tx)">Total</span><span class="v rojo">$'+fmt(t.eg)+'</span></div></div>'+abtBlq+'<div class="sbox"><div class="sl">Saldo Final del Club</div><div class="sm">$'+fmt(t.saldo)+'</div></div><button class="btn copiar" onclick="copiarWA(\''+id+'\','+esActual+')">📋 Copiar para WhatsApp</button>'+delBtn+'<div style="margin-top:12px;font-size:.8rem;color:var(--su);">📋 Movimientos</div>'+movsList+'</div></div>';
   }
 
   function toggleT(id){document.getElementById('ptb-'+id).classList.toggle('on');}
@@ -455,20 +486,19 @@
     if(!movs.length){toast('Sin movimientos para cerrar.');return;}
     if(!confirm('¿Cerrar y guardar este partido en el historial y en el Sheet?'))return;
     const snapshot=cp(movs);
-    const t=calcT(snapshot,cfg.abt,cfg.abtMonto);
+    const t=calcT(snapshot,cfg.asoc,cfg.abtMonto);
     const nombrePartido=cfg.evento;
     const fechaPartido=cfg.fecha||hoyISO();
     const abtMonto=cfg.abtMonto||ABT_X_DEF;
-    hist.unshift({id:Date.now(),fecha:fechaPartido,nombre:nombrePartido,abt:cfg.abt,abtMonto,movs:snapshot,totales:t});
+    hist.unshift({id:Date.now(),fecha:fechaPartido,nombre:nombrePartido,asoc:cfg.asoc,abtMonto,div:cfg.div||'Formativa',movs:snapshot,totales:t});
     movs=[]; cfg.evento=''; cfg.fecha='';
     guardar();
     ['iEvento','iFecha'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('tAbt').checked=false;
     document.getElementById('listaMov').innerHTML='<p class="empty">Sin movimientos aún.</p>';
     actualizarBarra();
     renderRes();
     // Enviar a Google Sheets via iframe oculto (sin CORS, sin popups)
-    const datos={efvo:t.efvo,transf:t.transf,ing:t.ing,mesa:t.mesa,arb:t.arb,eg:t.eg,abt:t.abt,abtMonto,ent:t.ent,saldo:t.saldo,movs:snapshot};
+    const datos={efvo:t.efvo,transf:t.transf,ing:t.ing,mesa:t.mesa,arb:t.arb,eg:t.eg,abt:t.abt,abtMonto,asoc:cfg.asoc||'',division:cfg.div||'Formativa',ent:t.ent,saldo:t.saldo,movs:snapshot};
     const cajaUrl = CAJA_URL
       + '?nombre=' + encodeURIComponent(nombrePartido||'Sin nombre')
       + '&fecha='  + encodeURIComponent(fechaPartido||'')
@@ -532,7 +562,7 @@
     h+='<div class="mf"><span class="ml">Mesa Control</span><span style="color:var(--rc)">$'+fmt(t.mesa)+'</span></div>';
     h+='<div class="mf"><span class="ml">Árbitros</span><span style="color:var(--rc)">$'+fmt(t.arb)+'</span></div>';
     h+='<div class="mf"><span class="ml"><b>Total</b></span><span style="color:var(--rc);font-weight:700">$'+fmt(t.eg)+'</span></div>';
-    if(p.abt){h+='<div class="msec">🏛 ABT</div><div class="mf"><span class="ml">'+t.ent+' entradas × $'+fmt(p.abtMonto||1000)+'</span><span style="color:var(--am)">-$'+fmt(t.abt)+'</span></div>';}
+    if(asocDe(p)){h+='<div class="msec">🏛 '+asocDe(p)+'</div><div class="mf"><span class="ml">'+t.ent+' entradas × $'+fmt(montoDe(p))+'</span><span style="color:var(--am)">-$'+fmt(t.abt)+'</span></div>';}
     h+='<div class="msec">📋 Movimientos</div>';
     p.movs.forEach(m=>{
       const lbl=m.t==='i'?(m.s==='efvo'?'💵 Efectivo':'📲 Transferencia'):(m.s==='mesa'?'🎛 Mesa Control':'🟨 Árbitros');
@@ -556,15 +586,17 @@
 
   function copiarWA(id,esActual){
     let arr,abt,fecha,nombre,abtMonto;
-    if(esActual){arr=cp(movs);abt=cfg.abt;fecha=cfg.fecha;nombre=cfg.evento;abtMonto=cfg.abtMonto;}
-    else{const p=hist.find(x=>x.id==id);if(!p)return;arr=cp(p.movs);abt=p.abt;fecha=p.fecha;nombre=p.nombre;abtMonto=p.abtMonto;}
+    let divis;
+    if(esActual){arr=cp(movs);abt=cfg.asoc;fecha=cfg.fecha;nombre=cfg.evento;abtMonto=cfg.abtMonto;divis=cfg.div;}
+    else{const p=hist.find(x=>x.id==id);if(!p)return;arr=cp(p.movs);abt=asocDe(p);fecha=p.fecha;nombre=p.nombre;abtMonto=montoDe(p);divis=divDe(p);}
     const t=calcT(arr,abt,abtMonto);
     let txt='🏀 *ENTRADAS BÁSQUET — TANDIL*\n';
     if(fecha) txt+='📅 '+fmtF(fecha)+'\n';
     if(nombre) txt+='🏟 '+nombre+'\n';
+    txt+='🏆 '+(divis||'Formativa')+(abt?' · '+abt:'')+'\n';
     txt+='\n💰 *INGRESOS*\n💵 Efectivo: $'+fmt(t.efvo)+'\n📲 Transferencia: $'+fmt(t.transf)+'\n▸ Total: $'+fmt(t.ing)+'\n';
     txt+='\n📤 *EGRESOS SUBCOMISIÓN DE BÁSQUET MENOR*\n🎛 Mesa Control: $'+fmt(t.mesa)+'\n🟨 Árbitros: $'+fmt(t.arb)+'\n▸ Total: $'+fmt(t.eg)+'\n';
-    if(abt) txt+='\n🏛 *ABT*\nEntradas vendidas: '+t.ent+'\n▸ A entregar: $'+fmt(t.abt)+' ($'+fmt(abtMonto)+' × entrada)\n';
+    if(abt) txt+='\n🏛 *'+abt+'*\nEntradas vendidas: '+t.ent+'\n▸ A entregar: $'+fmt(t.abt)+' ($'+fmt(abtMonto)+' × entrada)\n';
     txt+='\n✅ *SALDO FINAL SUBCOMISIÓN DE BÁSQUET MENOR: $'+fmt(t.saldo)+'*';
     const el=document.createElement('textarea');
     el.value=txt; el.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px;';
@@ -585,7 +617,8 @@
   document.getElementById('iPrecio').value=cfg.precio;
   document.getElementById('iAbt').value=cfg.abtMonto||1000;
   document.getElementById('pLbl').textContent='$'+fmt(cfg.precio);
-  document.getElementById('tAbt').checked=cfg.abt;
+  selAsoc(cfg.asoc||'');
+  selDiv(cfg.div||'Formativa');
   if(cfg.evento) document.getElementById('iEvento').value=cfg.evento;
   if(cfg.fecha)  document.getElementById('iFecha').value=cfg.fecha;
   actualizarBarra();
